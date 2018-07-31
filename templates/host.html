@@ -1,0 +1,173 @@
+{% extends "base.html" %} {% block page_content %}
+
+<link href="{{ url_for('static', filename='bootstrap-table/bootstrap-table.min.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='bottom_level.css') }}" rel="stylesheet">
+<script src="{{ url_for('static', filename='bootstrap-table/bootstrap-table.min.js' )}}"></script>
+<script src="{{ url_for('static', filename='bootstrap-table/locale/bootstrap-table-zh-CN.min.js') }}"></script>
+<script src="{{ url_for('static', filename='moment.min.js') }}"></script>
+<script src="{{ url_for('static', filename='moment-timezone-with-data.min.js') }}"></script>
+
+<div class="row-fluid">
+    <div class="col-md-12">
+        <table calss="table table-condensed table-responsive" id="table"></table>
+    </div>
+</div>
+<script>
+    var cpu_threshold = 10;     // cpu使用率小于10% 
+    var memory_threshold = 20;  // memory使用率小于20% 
+    var disk_threshold = 30;    // memory使用率小于30%
+
+    var $table = $('#table').bootstrapTable({
+        locale: 'zh-CN',
+        method: 'GET',
+        url: '/api/host',
+        cache: false,
+        pagination: true,
+        pageSize: 20,
+        pageNumber: 1,
+        pageList: [20, 50, 100, 'All'],
+        //sidePagination: 'server',
+        // search: true,
+        // searchOnEnterKey: true,  // 回车触发搜索
+        // strictSearch: true,      // 启用全局搜索
+        // showRefresh: true,       // 开启刷新按钮
+        //showColumns: true,
+        // showFullscreen: true,    // 开启全屏按钮
+        clickToSelect: true,
+        singleSelect: true, // 仅允许选择1行
+        idField: 'id',
+        sortName: 'project',
+        sortOrder: 'desc',
+        // detailView: true,
+        // detailFormatter: function(index, row) {};
+        columns: [ // 列名
+            { field: 'id', title: 'id', align: 'left', valign: 'middle', width: '10%', visible: true },
+            { field: 'project', title: '项目', align: 'center', valign: 'middle', width: '5%', sortable: true },
+            { field: 'name', title: '用途', align: 'left', valign: 'middle', width: '15%', sortable: true },
+            { field: 'private_ip', title: '内网ip', align: 'left', valign: 'middle', width: '10%', sortable: true, visible: false },
+            { field: 'public_ip', title: '外网ip', align: 'left', valign: 'middle', width: '10%', sortable: true, visible: false },
+            {
+                field: 'cpu', title: 'cpu', align: 'left', valign: 'middle', width: '10%', sortable: true,
+                formatter: function formatter(value, row, index, field) {
+                    value = value + ' (' + row.memory_usage + '%)';
+                    if (row.cpu_usage < cpu_threshold) {
+                        return '<span class="label label-warning">' + value + '</span>';
+                    } else {
+                        return '<span class="label label-default">' + value + '</span>';
+                    }
+                }
+            },
+            {
+                field: 'memory', title: '内存', align: 'left', valign: 'middle', width: '10%', sortable: true,
+                formatter: function formatter(value, row, index, field) {
+                    value = value + ' (' + row.memory_usage + '%)';
+                    if (row.memory_usage < memory_threshold) {
+                        return '<span class="label label-warning">' + value + '</span>';
+                    } else {
+                        return '<span class="label label-default">' + value + '</span>';
+                    }
+                }
+            },
+            {
+                field: 'disk', title: '硬盘(GB)', align: 'left', valign: 'middle', width: '30%', sortable: false,
+                formatter: function formatter(value, row, index, field) {
+                    var html = [];
+                    $.each(value.split(','), function (i, v) {
+                        if (v.split('|')[0].trim() == 'DATA') {
+                            html.push('<span class="label label-default">' + v + '</span>');
+                        } else if (v.split('|')[0].trim() == 'SYS') {
+                            html.push('<span class="label label-success">' + v + '</span>');
+                        }
+                    });
+                    return html.join(' ');
+                }
+            },
+            { field: 'cpu_usage', title: 'cpu使用率(%)', align: 'center', valign: 'middle', width: '5%', sortable: true, visible: false },
+            { field: 'memory_usage', title: '内存使用率(%)', align: 'center', valign: 'middle', width: '5%', sortable: true, visible: false },
+            {
+                field: 'disk_usage', title: '硬盘使用率(%)', align: 'left', valign: 'middle', width: '30%', sortable: true,
+                formatter: function formatter(value, row, index, field) {
+                    if (value == null) {
+                        return value;
+                    } else {
+                        var html = [];
+                        $.each(value.split(','), function (i, v) {
+                            name = v.split('|')[0];
+                            usage = v.split('|')[1];
+                            size = v.split('|')[2];
+
+                            if (name == 'vda1') {
+                                html.push('<span class="label label-success">' + name + ' ' + size + 'g ' + ' (' + usage + '%)' + '</span>');
+                            }
+                            else if (v.split('|')[1] < disk_threshold) {
+                                html.push('<span class="label label-warning">' + name + ' ' + size + 'g ' + ' (' + usage + '%)' + '</span>');
+                            } else {
+                                html.push('<span class="label label-default">' + name + ' ' + size + 'g ' + ' (' + usage + '%)' + '</span>');
+                            }
+                        });
+                        return html.join(' ');
+                    }
+                }
+            },
+            {
+                field: 'type', title: '付费方式', align: 'center', valign: 'middle', width: '5%', sortable: true,
+                formatter: function formatter(value, row, index, field) {
+                    switch (value) {
+                        case 'PREPAID':
+                            return '<span class="label label-success">' + '包年包月' + '</span>';
+                            break;
+                        case 'POSTPAID_BY_HOUR':
+                            return '<span class="label label-warning">' + '按量计费' + '</span>';
+                            break;
+                        case 'CDHPAID':
+                            return '<span class="label label-alert">' + 'CDH付费' + '</span>';
+                            break;
+                        default:
+                            return '';
+                    }
+                }
+            },
+            { field: 'price', title: '月租费', align: 'center', valign: 'middle', width: '5%', sortable: true },
+            {
+                field: 'create_time', title: '建立时间', align: 'center', valign: 'middle', width: '5%', visible: false, sortable: true,
+                formatter: function (value, row, index) {
+                    if (value == null) {
+                        return '';
+                    } else {
+                        var beijing = moment.tz(new Date(value), 'Asia/Shanghai');
+                        return beijing.format('YYYY-MM-DD');
+                    }
+                }
+            },
+            {
+                field: 'expire_time', title: '到期日', align: 'center', valign: 'middle', width: '5%', visible: true, sortable: false,
+                formatter: function (value, row, index) {
+                    if (value == null) {
+                        return '';
+                    } else {
+                        //var beijing = moment.tz(new Date(value), 'Asia/Shanghai');
+                        var beijing = moment(value).tz('Asia/Shanghai').format('YYYY-MM-DD');
+                        return '<span class="label label-success">' + beijing + '</span>';
+                    }
+                }
+            },
+        ],
+        rowStyle:
+            function rowStyle(row, index) {
+                var disk_usage = 0;
+                if (row.disk_usage != null) {
+                    $.each(row.disk_usage.split(','), function (i, v) {
+                        if (v.split('|')[0] != 'vda1' && v.split('|')[1] < disk_threshold) {
+                            disk_usage = 1;
+                        }
+                    });
+                }
+
+                if (row.cpu_usage < cpu_threshold || row.memory_usage < memory_threshold || disk_usage == 1) {
+                    return { classes: 'warning' };
+                } else {
+                    return {};
+                }
+            }
+    });
+</script> {% endblock %}

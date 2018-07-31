@@ -1,0 +1,5 @@
+qcloudapi-sdk-python
+peewee
+PyMySQL
+flask
+futures
