@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 url = 'http://127.0.0.1:5000'
 config = {
     'Region': 'ap-shanghai',
-    'secretId': '联系腾讯云客服',
-    'secretKey': '联系腾讯云客服',
+    'secretId': '',
+    'secretKey': '',
 }
 
 def cvm_total():

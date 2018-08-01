@@ -172,6 +172,7 @@ def get_project(id=None):
                     Host.price).alias('host_cost'),
             )
                 .join(Host, join_type=JOIN.LEFT_OUTER, on=(Host.project_id == Project.id))
+                .where(Host.status==0)
                 .group_by(Project.id)
                 .order_by(Project.create_time)
             )

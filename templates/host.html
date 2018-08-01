@@ -3,6 +3,7 @@
 <link href="{{ url_for('static', filename='bootstrap-table/bootstrap-table.min.css') }}" rel="stylesheet">
 <link href="{{ url_for('static', filename='bottom_level.css') }}" rel="stylesheet">
 <script src="{{ url_for('static', filename='bootstrap-table/bootstrap-table.min.js' )}}"></script>
+<script src="{{ url_for('static', filename='bootstrap-table/extensions/multiple-sort/bootstrap-table-multiple-sort.min.js' )}}"></script>
 <script src="{{ url_for('static', filename='bootstrap-table/locale/bootstrap-table-zh-CN.min.js') }}"></script>
 <script src="{{ url_for('static', filename='moment.min.js') }}"></script>
 <script src="{{ url_for('static', filename='moment-timezone-with-data.min.js') }}"></script>
@@ -23,21 +24,23 @@
         url: '/api/host',
         cache: false,
         pagination: true,
-        pageSize: 20,
+        pageSize: 15,
         pageNumber: 1,
-        pageList: [20, 50, 100, 'All'],
+        pageList: [15, 30, 50, 100, 'All'],
         //sidePagination: 'server',
         // search: true,
         // searchOnEnterKey: true,  // 回车触发搜索
         // strictSearch: true,      // 启用全局搜索
-        // showRefresh: true,       // 开启刷新按钮
-        //showColumns: true,
-        // showFullscreen: true,    // 开启全屏按钮
+        showRefresh: true,       // 开启刷新按钮
+        showColumns: true,
+        showFullscreen: true,    // 开启全屏按钮
         clickToSelect: true,
         singleSelect: true, // 仅允许选择1行
         idField: 'id',
-        sortName: 'project',
-        sortOrder: 'desc',
+        //sortName: 'project',
+        //sortOrder: 'desc',
+        showMultiSort: true,
+        sortPriority: [{sortName: 'project', sortOrder: 'desc'}, {sortName: 'name', sortOrder: 'asc'}],
         // detailView: true,
         // detailFormatter: function(index, row) {};
         columns: [ // 列名

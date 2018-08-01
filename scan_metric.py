@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 
 config = {
     'Region': 'ap-shanghai',
-    'secretId': '联系腾讯云客服',
-    'secretKey': '联系腾讯云客服',
+    'secretId': '',
+    'secretKey': '',
 }
 
 # 每小时采集一次 当前时间90天内的性能指标，入库
